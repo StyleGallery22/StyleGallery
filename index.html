@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <!-- 移动端适配 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StyleGallery: Training-free and Semantic-aware Style Transfer from Multiple Image References</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        html{
+            font-size:16px;          /* 1rem = 16px，方便用 rem */
+        }
+        body {
+            position: relative;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 通用卡片 */
+        .div1 {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: clamp(40px, 7vh, 80px);          /* 限制最小/最大 */
+            background-color: white;
+            margin: clamp(6px, 1vh, 12px) 0;
+            flex-shrink: 0;
+        }
+        .div2 {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: clamp(120px, 27vh, 240px);
+            width: 100%;
+            margin: 0;
+            background-color: rgba(211, 211, 211, 0.5);
+            flex-shrink: 0;
+        }
+
+        .title {
+            font-size: clamp(20px, 2.3vw, 36px);
+            font-family: 'Roboto', sans-serif;
+            text-align: center;
+            line-height: 1.4;
+            margin-bottom: 0;
+        }
+        .author {
+            font-size: clamp(14px, 1.5vw, 24px);
+            color: black;
+            font-weight: 400;
+            margin: 0 0.5rem;
+        }
+        .author a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        .author a:hover {
+            text-decoration: underline;
+        }
+
+        .img {
+            width: 60%;
+            height: auto;
+            display: block;
+            margin: clamp(6px, 1.2vh, 12px) auto clamp(4px, 0.5vh, 8px);
+        }
+        .description {
+            width: 60%;
+            max-width: 1300px;
+            margin: 0 auto;
+            line-height: 1.6;
+            font-size: clamp(12px, 1rem, 18px);
+            text-align: justify;
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .button {
+            margin: 5px;
+            padding: 10px 15px;
+            background-color: black;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #555;
+        }
+        /* 左右侧图片网格 */
+        .left-image,
+        .right-image {
+            display: grid;
+            gap: 10px;
+            justify-items: center;
+        }
+        .left-image {
+            grid-template-columns: 1fr;
+        }
+        .right-image {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .left-image img,
+        .right-image img {
+            width: 100%;
+            max-width: 150px;
+            transition: transform 0.3s, border 0.3s;
+            cursor: pointer;
+        }
+        .selected {
+            border: 3px solid black;
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 小屏兜底 */
+        @media (max-width: 600px){
+            .title{font-size:20px;}
+            .author{font-size:14px;}
+            .div1{height:50px;margin:8px 0;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="div1" style="margin-bottom: clamp(20px, 13vh, 60px)">
+            <h1 class="title">StyleGallery: Training-free and Semantic-aware Style Transfer <br> from Multiple Image References</h1>
+            <p class="author"><a target="_blank">Anonymous Author</a></p>
+        </div>
+
+        <div class="div1" style="height: clamp(20px, 2vh, 40px); margin-top: clamp(8px, 3vh, 20px)">
+            <a href="https://github.com/StyleGallery22/StyleGaller-code" style="text-decoration: none;">
+                <div style="display:inline-flex;align-items:center;padding:10px 20px;background:#000;border-radius:20px;color:#fff;">
+                    <img src="images/github.png" alt="Code Icon" style="width:20px;height:20px;margin-right:8px;">
+                    Code
+                </div>
+            </a>
+        </div>
+
+        <div class="div1" style="height: auto; margin-top: clamp(8px, 2vh, 20px); margin-bottom: clamp(8px, 2vh, 20px)">
+            <div style="display: flex; flex-direction: row; justify-content: center; align-items: flex-start; width: 100%;">
+                <div style="display: flex; justify-content: center; align-items: flex-start; margin-right: 30px; margin-top: 1vh">
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <p style="margin: 0; font-size: 20px;">Content</p>
+                        <img src="images/pair1/content.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <p style="margin: 0; font-size: 20px;">Result</p>
+                        <img src="images/pair1/gif.gif" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <p style="margin: 0; font-size: 20px;">Style</p>
+                        <img src="images/pair1/style.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: center; align-items: flex-start; margin-top: 1vh">
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <p style="margin: 0; font-size: 20px;">Content</p>
+                        <img src="images/pair2/content.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <p style="margin: 0; font-size: 20px;">Result</p>
+                        <img src="images/pair2/gif.gif" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <p style="margin: 0; font-size: 20px;">Style</p>
+                        <img src="images/pair2/style.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: row; justify-content: center; align-items: flex-start; width: 100%;">
+                <div style="display: flex; justify-content: center; align-items: flex-start; margin-right: 30px;">
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair3/content.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair3/gif.gif" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair3/style.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: center; align-items: flex-start;">
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair4/content.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair4/gif.gif" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair4/style.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: row; justify-content: center; align-items: flex-start; width: 100%;">
+                <div style="display: flex; justify-content: center; align-items: flex-start; margin-right: 30px;">
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair5/content.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair5/gif.gif" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair5/style.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: center; align-items: flex-start;">
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair6/content.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair6/gif.gif" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                    <div style="text-align: center; margin: 0 1vh;">
+                        <img src="images/pair6/style.png" class="img" style="width: 100%; max-width: 120px; margin-top: 0.2vh;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="div1" style="height: auto; margin-bottom: clamp(4px, 1vh, 8px)">
+            <p class="description" style="text-align:center;font-size:clamp(18px,1.6rem,28px);font-weight:600">Style Gallery</p>
+            <div class="image-container flex justify-center mt-4" style="display: flex; align-items: center; " >
+                <div class="left-image grid">
+                    <img src="images/content/1.png" alt="Left Image 1" style="width: 100%; max-width: 150px;" onclick="selectContent(1)" id="contentImage1" />
+                    <img src="images/content/2.png" alt="Left Image 2" style="width: 100%; max-width: 150px;" onclick="selectContent(2)" id="contentImage2" />
+                    <img src="images/content/3.png" alt="Left Image 3" style="width: 100%; max-width: 150px;" onclick="selectContent(3)" id="contentImage3" />
+                </div>
+                <div class="middle-image" style="flex-grow: 1; display: flex; justify-content: center;">
+                    <img id="middle" src="images/default.png" alt="Middle Image" style="width: 100%; max-width: 490px; height: auto; margin: 0 1rem;" />
+                </div>
+                <div class="right-image" style="display: flex; flex-direction: column; align-items: center;">
+                    <img src="images/style/1.png" alt="Right Image 1" style="width: 100%; max-width: 150px; margin: 0;" onclick="selectStyle(1)" />
+                    <img src="images/style/2.png" alt="Right Image 2" style="width: 100%; max-width: 150px; margin: 0;" onclick="selectStyle(2)" />
+                    <img src="images/style/3.png" alt="Right Image 3" style="width: 100%; max-width: 150px; margin: 0;" onclick="selectStyle(3)" />
+                </div>
+            </div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="button" onclick="generateImage()">Generate</button>
+                <button class="button" onclick="resetSelection()">Reset</button>
+            </div>
+        </div>
+
+        <div class="div1" style="height: auto;">
+            <p class="description" style="text-align:center;font-size:clamp(22px,2.2rem,36px);font-weight:600">Results</p>
+            <p class="description" style="text-align:center;font-size:clamp(16px,1.4rem,24px);font-weight:500;margin-bottom:0;margin-top:0">Style Transfer Results</p>
+            <img src="images/result1.png" class="img" style="width:67%;margin-top:0;margin-bottom:0">
+            <p class="description" style="text-align:center;font-size:clamp(16px,1.4rem,24px);font-weight:500;margin-bottom:0;margin-top:0">Single Reference</p>
+            <img src="images/result2.png" class="img" style="width:68%;margin-bottom:0;margin-top:0">
+            <p class="description" style="text-align:center;font-size:clamp(16px,1.4rem,24px);font-weight:500;margin-bottom:0;margin-top:0">Multi References</p>
+            <img src="images/result3.png" class="img" style="width:66%;margin-bottom:0;margin-top:0">
+            <img src="images/result4.png" class="img" style="width:66%;margin-bottom:0;margin-top:0">
+        </div>
+
+        <div class="div1" style="height: auto">
+            <p class="description" style="text-align:center;font-size:clamp(22px,2.2rem,36px);font-weight:600;margin-bottom:0;margin-top:1rem">Semantic Clustering Results</p>
+            <img src="images/cluster.png" class="img" style="width:80%;margin-bottom:0;margin-top:0">
+        </div>
+    </div>
+
+    <script>
+    let selectedContentIndex = null;
+    const selectedStyleIndices = new Set(); // 使用 Set 来存储选中的风格图像索引
+
+    function selectContent(index) {
+        selectedContentIndex = index; // 保存选择的内容图像索引
+        updateSelectedContent(); // 更新选中的内容图像样式
+    }
+
+    function selectStyle(index) {
+        // 切换选中状态
+        if (selectedStyleIndices.has(index)) {
+            selectedStyleIndices.delete(index);
+        } else {
+            selectedStyleIndices.add(index);
+        }
+        updateSelectedStyle(); // 更新选中的风格图像样式
+    }
+
+    function updateSelectedContent() {
+        const images = document.querySelectorAll('.left-image img');
+        images.forEach((img, idx) => {
+            if (idx + 1 === selectedContentIndex) {
+                img.classList.add('selected'); // 添加选中样式
+            } else {
+                img.classList.remove('selected'); // 移除其他图像的选中样式
+            }
+        });
+    }
+
+    function updateSelectedStyle() {
+        const images = document.querySelectorAll('.right-image img');
+        images.forEach((img, idx) => {
+            if (selectedStyleIndices.has(idx + 1)) {
+                img.classList.add('selected'); // 添加选中样式
+            } else {
+                img.classList.remove('selected'); // 移除其他图像的选中样式
+            }
+        });
+    }
+
+    function generateImage() {
+            const middleImage = document.getElementById('middle');
+
+            // 检查是否选择了内容
+            if (selectedContentIndex !== null && selectedStyleIndices.size > 0) {
+                // 获取选中的风格索引并排序（可选）
+                const selectedStyleArray = Array.from(selectedStyleIndices).sort((a, b) => a - b);
+
+                // 创建样式字符串
+                const styleString = selectedStyleArray.map(styleIndex => `style${styleIndex}`).join('_');
+
+                // 构造图像路径
+                const imagePath = `images/select/content${selectedContentIndex}_${styleString}.png`;
+
+                // 设置中间图像的源路径
+                middleImage.src = imagePath;
+
+                console.log(imagePath); // 打印生成的图像路径，以便调试
+            } else {
+                alert('请选择内容和风格图像。'); // 提示用户
+            }
+        }
+
+    function resetSelection() {
+        selectedContentIndex = null; // 重置内容索引
+        selectedStyleIndices.clear(); // 重置风格索引
+        const middleImage = document.getElementById('middle');
+        middleImage.src = "images/default.png"; // 设置中间图像为默认图像
+
+        // 移除所有图像的选中样式
+        document.querySelectorAll('.left-image img, .right-image img').forEach(img => {
+            img.classList.remove('selected');
+        });
+    }
+</script>
+</body>
+</html>
